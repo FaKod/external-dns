@@ -3,7 +3,7 @@ package provider
 import (
 	"strings"
 
-	"github.com/fakod/egoscale"
+	"github.com/exoscale/egoscale"
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
 	log "github.com/sirupsen/logrus"
@@ -46,7 +46,7 @@ func (ep *ExoscaleProvider) getZones() (map[int64]string, error) {
 
 	zones := map[int64]string{}
 	for _, d := range dom {
-		zones[d.Domain.ID] = d.Domain.UnicodeName
+		zones[d.ID] = d.Name
 	}
 	return zones, nil
 }
@@ -127,7 +127,7 @@ func (ep *ExoscaleProvider) Records() ([]*endpoint.Endpoint, error) {
 	}
 
 	for _, d := range dom {
-		record, err := ep.client.GetRecords(d.Domain.UnicodeName)
+		record, err := ep.client.GetRecords(d.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +138,8 @@ func (ep *ExoscaleProvider) Records() ([]*endpoint.Endpoint, error) {
 			default:
 				continue
 			}
-			endpoints = append(endpoints, endpoint.NewEndpoint(r.Name+"."+d.Domain.UnicodeName, r.RecordType, r.Content))
+			ep := endpoint.NewEndpointWithTTL(r.Name+"."+d.UnicodeName, r.RecordType, endpoint.TTL(r.TTL), r.Content)
+			endpoints = append(endpoints, ep)
 		}
 	}
 
