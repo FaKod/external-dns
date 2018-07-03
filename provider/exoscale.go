@@ -53,7 +53,7 @@ func (ep *ExoscaleProvider) getZones() (map[int64]string, error) {
 
 // ApplyChanges simply modifies DNS via exoscale API
 func (ep *ExoscaleProvider) ApplyChanges(changes *plan.Changes) error {
-	defer ep.OnApplyChanges(changes)
+	ep.OnApplyChanges(changes)
 
 	zones, err := ep.getZones()
 	if err != nil {
@@ -104,7 +104,6 @@ func (ep *ExoscaleProvider) ApplyChanges(changes *plan.Changes) error {
 
 			for _, r := range records {
 				if r.Name == name {
-					log.Infof("DELETE: %d", r.ID)
 					if err := ep.client.DeleteRecord(zones[zoneID], r.ID); err != nil {
 						return err
 					}
