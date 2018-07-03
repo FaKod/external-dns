@@ -9,32 +9,42 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// ExoscaleProvider
-// initialized as dns provider with no records
-type ExoscaleProvider struct {
-	domain         DomainFilter
-	client         *egoscale.Client
-	filter         *zoneFilter
-	OnApplyChanges func(changes *plan.Changes)
-	// OnRecords      func()
+//
+type EgoscaleClientI interface {
+	GetRecords(string) ([]egoscale.DNSRecord, error)
+	GetDomains() ([]egoscale.DNSDomain, error)
+	CreateRecord(string, egoscale.DNSRecord) (*egoscale.DNSRecord, error)
+	DeleteRecord(string, int64) error
 }
 
+// ExoscaleProvider initialized as dns provider with no records
+type ExoscaleProvider struct {
+	domain         DomainFilter
+	client         EgoscaleClientI
+	filter         *zoneFilter
+	OnApplyChanges func(changes *plan.Changes)
+}
+
+// ExoscaleOption for Provider options
 type ExoscaleOption func(*ExoscaleProvider)
 
 // NewExoscaleProvider returns ExoscaleProvider DNS provider interface implementation
 func NewExoscaleProvider(endpoint, apiKey, apiSecret string, opts ...ExoscaleOption) *ExoscaleProvider {
+	client := egoscale.NewClient(endpoint, apiKey, apiSecret)
+	return NewExoscaleProviderWithClient(endpoint, apiKey, apiSecret, client, opts...)
+}
+
+// NewExoscaleProviderWithClient returns ExoscaleProvider DNS provider interface implementation (Client provided)
+func NewExoscaleProviderWithClient(endpoint, apiKey, apiSecret string, client EgoscaleClientI, opts ...ExoscaleOption) *ExoscaleProvider {
 	ep := &ExoscaleProvider{
 		filter:         &zoneFilter{},
 		OnApplyChanges: func(changes *plan.Changes) {},
-		// OnRecords:      func() {},
-		domain: NewDomainFilter([]string{""}),
-		client: egoscale.NewClient(endpoint, apiKey, apiSecret),
+		domain:         NewDomainFilter([]string{""}),
+		client:         client,
 	}
-
 	for _, opt := range opts {
 		opt(ep)
 	}
-
 	return ep
 }
 
@@ -75,26 +85,13 @@ func (ep *ExoscaleProvider) ApplyChanges(changes *plan.Changes) error {
 				}
 			}
 		}
-		// zoneID := im.filter.EndpointZoneID(ep, zones)
-		// if zoneID == "" {
-		// 	continue
-		// }
-		// perZoneChanges[zoneID].Create = append(perZoneChanges[zoneID].Create, ep)
 	}
-	// for _, epoint := range changes.UpdateNew {
-	// 	// zoneID := im.filter.EndpointZoneID(ep, zones)
-	// 	// if zoneID == "" {
-	// 	// 	continue
-	// 	// }
-	// 	// perZoneChanges[zoneID].UpdateNew = append(perZoneChanges[zoneID].UpdateNew, ep)
-	// }
-	// for _, epoint := range changes.UpdateOld {
-	// 	// zoneID := im.filter.EndpointZoneID(ep, zones)
-	// 	// if zoneID == "" {
-	// 	// 	continue
-	// 	// }
-	// 	// perZoneChanges[zoneID].UpdateOld = append(perZoneChanges[zoneID].UpdateOld, ep)
-	// }
+	for _, epoint := range changes.UpdateNew {
+		log.Debugf("UPDATE-NEW (ignored) for epoint: %+v", epoint)
+	}
+	for _, epoint := range changes.UpdateOld {
+		log.Debugf("UPDATE-OLD (ignored) for epoint: %+v", epoint)
+	}
 	for _, epoint := range changes.Delete {
 		if zoneID, name := ep.filter.EndpointZoneID(epoint, zones); zoneID != 0 {
 			records, err := ep.client.GetRecords(zones[zoneID])
