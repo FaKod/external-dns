@@ -138,7 +138,7 @@ func (ep *ExoscaleProvider) Records() ([]*endpoint.Endpoint, error) {
 			default:
 				continue
 			}
-			ep := endpoint.NewEndpointWithTTL(r.Name+"."+d.UnicodeName, r.RecordType, endpoint.TTL(r.TTL), r.Content)
+			ep := endpoint.NewEndpointWithTTL(r.Name+"."+d.Name, r.RecordType, endpoint.TTL(r.TTL), r.Content)
 			endpoints = append(endpoints, ep)
 		}
 	}
