@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//
+// EgoscaleClientI for replaceable implementation
 type EgoscaleClientI interface {
 	GetRecords(string) ([]egoscale.DNSRecord, error)
 	GetDomains() ([]egoscale.DNSDomain, error)
