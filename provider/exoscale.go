@@ -195,7 +195,7 @@ func (f *zoneFilter) EndpointZoneID(endpoint *endpoint.Endpoint, zones map[int64
 	var matchZoneID int64
 	var matchZoneName string
 	for zoneID, zoneName := range zones {
-		if strings.HasSuffix(endpoint.DNSName, zoneName) && len(zoneName) > len(matchZoneName) {
+		if strings.HasSuffix(endpoint.DNSName, "."+zoneName) && len(zoneName) > len(matchZoneName) {
 			matchZoneName = zoneName
 			matchZoneID = zoneID
 			name = strings.TrimSuffix(endpoint.DNSName, "."+zoneName)
